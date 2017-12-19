@@ -14,8 +14,8 @@ package com.echoss.opencv310.util;
  * - setMouseCallback
  * - waitKey
  * - updateWindow 
- * - destryWindow
- * - destryAllWindow
+ * - destroyWindow
+ * - destroyAllWindow
  * 
  * @author Firstwave
  * 
