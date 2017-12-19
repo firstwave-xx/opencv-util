@@ -15,8 +15,8 @@ OpenCV java util for UI (NamedWindows,GUI, TrackBar, Storage)
  * - setMouseCallback
  * - waitKey
  * - updateWindow 
- * - destryWindow
- * - destryAllWindow
+ * - destroyWindow
+ * - destroyAllWindow
  * 
  * @author Firstwave
  * 
