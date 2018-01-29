@@ -14,8 +14,8 @@ package com.echoss.opencv310.util;
  * - setMouseCallback
  * - waitKey
  * - updateWindow 
- * - destroyWindow
- * - destroyAllWindow
+ * - destryWindow
+ * - destryAllWindow
  * 
  * @author Firstwave
  * 
@@ -377,35 +377,26 @@ public class Tagui {
 	 * @return key			input keycode, or -1 when timeout
 	 *  
 	 */
-	private static boolean isWaitKey = false;
+	private static Object syncObject = new Object();
+	private static int lastKey = 0;
+	
 	public static int waitKey(int delay) {
-		isWaitKey = true;
-		int timeout = delay;
 		try {
-			synchronized (keyUserdata) {
-				while( isWaitKey && (delay == 0 || timeout > 0)  ) {
-					if( delay > 0 ) {
-						int seconds = timeout / 1000;
-						timeout -= 50;
-						if( timeout < 0 ) {
-							return -1;
-						}
-						if( timeout/1000 < seconds ) {
-//							System.out.println("timeout seconds="+seconds+" isWaitKey="+isWaitKey +" keyUserData[0]="+keyUserdata[0] +" keyUserData[1]="+keyUserdata[1] );
-						}
-					}
-					
-					keyUserdata.wait(50);
+			if(delay==0) {
+				synchronized (syncObject) {
+					syncObject.wait();
 				}
 			}
-//	        System.out.println("timeout="+timeout+" isWaitKey="+isWaitKey +" keyUserData[0]="+keyUserdata[0] +" keyUserData[1]="+keyUserdata[1] );
-	        
-	        return keyUserdata[1];
-	        
+			Thread.sleep(delay);
 		} catch(Exception e) {
 			
 		}
-		return -1;
+		int ret = -1;
+		if( keyUserdata[1] != lastKey ) {
+			ret = keyUserdata[1];
+			lastKey = ret;
+		}
+		return ret;
 	}
 	
 	
@@ -433,17 +424,16 @@ public class Tagui {
 	
 	static {
 		KeyEventDispatcher dispatcher = new KeyEventDispatcher() {
-		      public boolean dispatchKeyEvent(KeyEvent e) {
-		    	  synchronized (keyUserdata) {
-		    		  if( e.getID() == KeyEvent.KEY_PRESSED ) {
-					        keyUserdata[0] = e.getID();
-					        keyUserdata[1] = e.getKeyCode();
-					        isWaitKey = false;
-					        keyUserdata.notify();
-		    		  }
-		    	  }
-		    	  return false;
-		      }
+			public boolean dispatchKeyEvent(KeyEvent e) {
+		    	if( e.getID() == KeyEvent.KEY_PRESSED ) {
+					synchronized (syncObject) {
+						keyUserdata[0] = e.getID();
+						keyUserdata[1] = e.getKeyCode();	// waitKey value
+						syncObject.notifyAll();
+					}
+		    	}
+		    	return false;
+			}
 		};
 		
 		KeyboardFocusManager.getCurrentKeyboardFocusManager()
